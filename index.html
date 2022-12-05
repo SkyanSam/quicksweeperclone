@@ -24,7 +24,7 @@ for(let i = 0; i<=boardsize;i++){
 	c.fillRect(i*s/boardsize,0,1,s);
 	c.fillRect(0,i*s/boardsize,s,1);
 }
-ws2 = new WebSocket('ws:localhost:8001');
+ws2 = new WebSocket('ws:192.168.1.135:8001');
 ws2.onmessage=function(e){
 	if(e.data=='Send your name.'){
 		ws2.send(prompt(e.data));
