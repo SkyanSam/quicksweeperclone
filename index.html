@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <body></body>
+  <script>
+  ce=document.body.appendChild(document.createElement('canvas'));
+const s = 640;
+ce.width=s;
+ce.height=s;
+const boardsize=20;
+const gamename='minesweep 3';
+const pMine=.2;
+var colors = ['#800000','#008000','#000080','#808000','#800080','#008080'];
+var players = {}
+var numPlayers=0;
+var started=false;
+var named=false;
+var marked={}
+c=ce.getContext('2d');
+c.font=''+s/boardsize+'px sans-serif';
+c.fillStyle='#808080'
+c.fillRect(0,0,s,s);
+c.fillStyle='#000000'
+for(let i = 0; i<=boardsize;i++){
+	c.fillRect(i*s/boardsize,0,1,s);
+	c.fillRect(0,i*s/boardsize,s,1);
+}
+ws2 = new WebSocket('ws:localhost:8001');
+ws2.onmessage=function(e){
+	if(e.data=='Send your name.'){
+		ws2.send(prompt(e.data));
+		named = true;
+	} else
+	if(!started){
+		players[e.data]=colors[numPlayers++];
+	}
+	var l=e.data.split('\n')
+	if(l.length==3){
+		let x = +l[0];
+		let y = +l[1];
+		if(+l[2]!=+l[2]){
+			c.fillStyle=players[l[2]];
+			c.fillRect(x*s/boardsize,y*s/boardsize,s/boardsize,s/boardsize);
+		} else {
+            console.log(''+x+'\n'+y+l[2]);
+			c.fillStyle='#ffffff';
+			c.fillRect(x*s/boardsize,y*s/boardsize,s/boardsize,s/boardsize);
+            console.log(c.fillStyle);
+			c.fillStyle='#000000'
+			c.fillText(l[2],x*s/boardsize,(y+1)*s/boardsize,s/boardsize);
+            if(+l[2]==0) {
+                for(let a=x-1;a<=x+1;a++){
+                    for(let b=y-1;b<=y+1;b++){
+                        if(a>=0&&b>=0&&a<boardsize&&b<boardsize){
+                            let st=''+a+'\n'+b
+                            if(!marked[st]){
+                                marked[st]=true;
+                                ws2.send(st);
+                            }
+                        }
+                    }
+                }
+            }
+		}
+	} else {
+		alert(e.data);
+	}
+}
+ce.onmousedown=function(e){
+    started=true;
+    let x = Math.floor((e.x-ce.getBoundingClientRect().left)*boardsize/s);
+    let y = Math.floor((e.y-ce.getBoundingClientRect().left)*boardsize/s);
+    e.preventDefault();
+	if(e.which==1){
+        marked[''+x+'\n'+y]=true;
+		ws2.send(''+x+'\n'+y)
+	} else if(e.which==3){
+        e.preventDefault();
+        c.fillStyle='#000000';
+		c.fillText('X',x*s/boardsize,(y+1)/boardsize*s,s/boardsize);
+        return false;
+	}
+}
+ce.oncontextmenu=function(e){
+    e.preventDefault();
+    return false;
+}
+ws2.onopen=function(){ws2.send('\n'+gamename+'\nmultiplayer minesweeper\n'+boardsize+'\n'+pMine);}
+  </script>
+</html>
